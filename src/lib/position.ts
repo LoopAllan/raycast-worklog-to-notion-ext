@@ -4,6 +4,8 @@ export interface RootBlockSummary {
   id: string;
   /** Plain text of the block; empty for blocks without rich text. */
   text: string;
+  /** Notion block type, e.g. "paragraph", "heading_2", "divider". */
+  type?: string;
 }
 
 export type InsertPosition = { type: "after_block"; after_block: { id: string } } | { type: "start" } | { type: "end" };

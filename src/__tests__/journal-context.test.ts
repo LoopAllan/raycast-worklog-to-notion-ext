@@ -64,7 +64,7 @@ describe("loadJournalContext", () => {
     const context = await loadJournalContext(client as unknown as JournalClient, SETTINGS, cache, NOW);
 
     expect(context.pageId).toBe("page-today");
-    expect(context.rootBlocks).toEqual([{ id: "page-today-b1", text: "1000 - 1030 開會" }]);
+    expect(context.rootBlocks).toEqual([{ id: "page-today-b1", text: "1000 - 1030 開會", type: "paragraph" }]);
     expect(cache.store.get("dataSource:db")).toBe("ds");
     expect(cache.store.get("page:db:2026-11-20")).toBe("page-today");
   });

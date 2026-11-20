@@ -1,4 +1,4 @@
-export type EntryNodeType = "paragraph" | "bulleted_list_item";
+export type EntryNodeType = "paragraph" | "bulleted_list_item" | "heading_2" | "divider";
 
 export interface EntryNode {
   type: EntryNodeType;
