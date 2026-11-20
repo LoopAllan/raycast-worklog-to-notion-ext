@@ -32,7 +32,7 @@ function fakeWriter(existingIds: string[]) {
 }
 
 const SECTIONS: Section[] = [
-  { name: "早安", startMinutes: 540 },
+  { name: "早上", startMinutes: 540 },
   { name: "午休", startMinutes: 720 },
   { name: "下午", startMinutes: 780 },
   { name: "加班", startMinutes: 1080 },
@@ -67,12 +67,12 @@ describe("writeWorklog", () => {
     );
 
     const headings = calls.map((call) => call.children[0].heading_2?.rich_text[0].text.content);
-    expect(headings).toEqual(["早安", "午休", "下午", undefined]);
+    expect(headings).toEqual(["早上", "午休", "下午", undefined]);
     expect(calls.slice(0, 3).every((call) => call.children.map((c) => c.type).join() === "heading_2,divider")).toBe(
       true,
     );
     expect(calls.map((call) => call.position)).toEqual([
-      { type: "after_block", after_block: { id: "synced" } }, // 早安: nothing earlier -> after the first block
+      { type: "after_block", after_block: { id: "synced" } }, // 早上: nothing earlier -> after the first block
       { type: "after_block", after_block: { id: "e1000" } }, // 午休: after the last entry before 1200
       { type: "after_block", after_block: { id: "new-4" } }, // 下午: after 午休's divider
       { type: "after_block", after_block: { id: "new-6" } }, // entry 1305: under 下午
@@ -83,7 +83,7 @@ describe("writeWorklog", () => {
     const { client, calls } = fakeWriter([]);
     const blocks: RootBlockSummary[] = [
       ...rootBlocks,
-      { id: "h", text: "早安", type: "heading_2" },
+      { id: "h", text: "早上", type: "heading_2" },
       { id: "d", text: "", type: "divider" },
     ];
 

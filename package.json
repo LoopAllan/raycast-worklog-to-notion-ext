@@ -65,7 +65,7 @@
     {
       "name": "autoSections",
       "title": "Auto Sections",
-      "label": "自動添加 早安／午休／下午／加班 時段",
+      "label": "自動添加 早上／午休／下午／加班 時段",
       "description": "When on, adding a worklog also adds each missing section (heading + divider) once its start time has passed.",
       "type": "checkbox",
       "required": false,
@@ -73,8 +73,8 @@
     },
     {
       "name": "sectionMorningStart",
-      "title": "早安 Start",
-      "description": "Start time (mmii) of 早安. Used only when Auto Sections is on.",
+      "title": "早上 Start",
+      "description": "Start time (mmii) of 早上. Used only when Auto Sections is on.",
       "type": "textfield",
       "required": false,
       "default": "0900",

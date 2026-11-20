@@ -1,7 +1,7 @@
 import { type InsertPosition, parseEntryStart, type RootBlockSummary } from "./position";
 import { formatHhmm, normalizeTime, parseHhmm } from "./time";
 
-export const SECTION_NAMES = ["早安", "午休", "下午", "加班"] as const;
+export const SECTION_NAMES = ["早上", "午休", "下午", "加班"] as const;
 export type SectionName = (typeof SECTION_NAMES)[number];
 
 export interface Section {

@@ -61,7 +61,7 @@ function configuredSections(): Section[] | null {
     return null;
   }
   return parseSections({
-    早安: preferences.sectionMorningStart ?? "",
+    早上: preferences.sectionMorningStart ?? "",
     午休: preferences.sectionLunchStart ?? "",
     下午: preferences.sectionAfternoonStart ?? "",
     加班: preferences.sectionOvertimeStart ?? "",

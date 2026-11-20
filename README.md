@@ -18,8 +18,8 @@ npm run dev   # Raycast 會自動載入這個 extension
 | Date Property Name           |      | 用來找今天頁面的日期欄位，預設 `Date`                                                              |
 | Jira Base URL                | ✅   | Jira Cloud 網址，例如 `https://your-domain.atlassian.net`                                          |
 | Jira Email / API Token       |      | 有填 Jira ticket 時才需要，用來抓 summary                                                          |
-| Auto Sections                |      | 打開後自動添加「早安／午休／下午／加班」時段，見下方〈自動時段〉                                   |
-| 早安／午休／下午／加班 Start |      | 各時段開始時間（`mmii`），預設 0900／1200／1300／1800，必須依序遞增；只在 Auto Sections 打開時使用 |
+| Auto Sections                |      | 打開後自動添加「早上／午休／下午／加班」時段，見下方〈自動時段〉                                   |
+| 早上／午休／下午／加班 Start |      | 各時段開始時間（`mmii`），預設 0900／1200／1300／1800，必須依序遞增；只在 Auto Sections 打開時使用 |
 
 ### 全域快捷鍵
 
@@ -65,7 +65,7 @@ Raycast 不允許 extension 自帶預設的全域快捷鍵，需要手動設定�
 
 ## 自動時段
 
-Auto Sections 打開時，每次 Add Worklog 會先依序檢查「早安 → 午休 → 下午 → 加班」，符合以下兩個條件的時段會被添加為兩個 block（`## 時段名稱` heading 加上 divider）：
+Auto Sections 打開時，每次 Add Worklog 會先依序檢查「早上 → 午休 → 下午 → 加班」，符合以下兩個條件的時段會被添加為兩個 block（`## 時段名稱` heading 加上 divider）：
 
 1. 頁面上還沒有同名的 heading
 2. 目前時間已經到了該時段的開始時間
