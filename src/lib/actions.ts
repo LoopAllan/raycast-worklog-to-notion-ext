@@ -11,6 +11,7 @@ export const ACTIONS = [
   "上 Lab",
   "上 Staging",
   "上 Prod",
+  "驗收",
   "學習",
   "按摩",
 ] as const;
