@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findInsertPosition, parseEntryStart } from "../lib/position";
+import { findInsertPosition, latestEntryEnd, parseEntryStart } from "../lib/position";
 
 const blocks = [
   { id: "synced", text: "" },
@@ -55,5 +55,28 @@ describe("findInsertPosition", () => {
 
   it("inserts at the start when the first block starts later", () => {
     expect(findInsertPosition([{ id: "e1400", text: "1400 - 1500 實作" }], 600)).toEqual({ type: "start" });
+  });
+});
+
+describe("latestEntryEnd", () => {
+  it("returns the latest end time among entries", () => {
+    expect(latestEntryEnd(blocks)).toBe("1730");
+  });
+
+  it("uses the latest end, not the last block, when entries are out of order", () => {
+    const unordered = [
+      { id: "a", text: "1400 - 1500 實作" },
+      { id: "b", text: "0900 - 0930 開會" },
+    ];
+    expect(latestEntryEnd(unordered)).toBe("1500");
+  });
+
+  it("returns null when there is no entry", () => {
+    expect(latestEntryEnd([{ id: "h", text: "早上" }])).toBeNull();
+    expect(latestEntryEnd([])).toBeNull();
+  });
+
+  it("ignores entries whose end is not a valid time", () => {
+    expect(latestEntryEnd([{ id: "a", text: "1000 - 2599 實作" }])).toBeNull();
   });
 });

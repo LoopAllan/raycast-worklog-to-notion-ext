@@ -1,4 +1,4 @@
-import { parseHhmm } from "./time";
+import { formatHhmm, parseHhmm } from "./time";
 
 export interface RootBlockSummary {
   id: string;
@@ -10,7 +10,7 @@ export interface RootBlockSummary {
 
 export type InsertPosition = { type: "after_block"; after_block: { id: string } } | { type: "start" } | { type: "end" };
 
-const ENTRY_PATTERN = /^(\d{4})\s*-\s*\d{4}/;
+const ENTRY_PATTERN = /^(\d{4})\s*-\s*(\d{4})/;
 
 /** Returns the start time in minutes when the text looks like "mmii - mmii ...", otherwise null. */
 export function parseEntryStart(text: string): number | null {
@@ -23,6 +23,24 @@ export function parseEntryStart(text: string): number | null {
   } catch {
     return null; // e.g. "2560 - ..." is not a time entry, just text that starts with digits
   }
+}
+
+/** The latest end time ("mmii") among the entries on the page, or null when there is none. */
+export function latestEntryEnd(blocks: RootBlockSummary[]): string | null {
+  let latest: number | null = null;
+  for (const block of blocks) {
+    const match = ENTRY_PATTERN.exec(block.text.trim());
+    if (!match) {
+      continue;
+    }
+    try {
+      const end = parseHhmm(match[2]);
+      latest = latest === null ? end : Math.max(latest, end);
+    } catch {
+      // Not a real time, so not an entry.
+    }
+  }
+  return latest === null ? null : formatHhmm(latest);
 }
 
 /**

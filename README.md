@@ -41,6 +41,8 @@ Raycast 不允許 extension 自帶預設的全域快捷鍵，需要手動設定�
 | Jira Ticket | 選填；`VIPOP-xxxxx`／`PMOJBVIP-xxxxx`，自動組成 `<ticket> <summary>`                                  |
 | Description | 選填；每行一個 block。縮排的行會掛到上一行底下，`- ` 開頭會變成項目符號                               |
 
+表單上方的「上一筆結束」顯示今天頁面上所有紀錄中最晚的結束時間，僅供參考，不會自動帶入。
+
 `⌘↵`（Windows 為 `Ctrl+↵`）送出。
 
 ## 寫入規則

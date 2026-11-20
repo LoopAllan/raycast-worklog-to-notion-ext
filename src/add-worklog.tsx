@@ -15,6 +15,7 @@ import { buildEntryTree } from "./lib/entry";
 import { fetchTicketSummary, normalizeTicketKey } from "./lib/jira";
 import { loadJournalContext, type JournalContext } from "./lib/journal-context";
 import { createNotionClient, isStaleContextError } from "./lib/notion";
+import { latestEntryEnd } from "./lib/position";
 import { parseSections, type Section } from "./lib/sections";
 import { currentTimeSlot, normalizeTime, parseHhmm, resolveEndTime, roundDuration } from "./lib/time";
 import { writeWorklog } from "./lib/write-worklog";
@@ -96,6 +97,7 @@ export default function Command() {
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ticketLine, setTicketLine] = useState<string>();
+  const [lastEndHint, setLastEndHint] = useState("載入中…");
   // Notion and Jira lookups run while the user is still typing, so submitting only has to write.
   const journalRef = useRef<Promise<JournalContext>>(undefined);
   const summariesRef = useRef(new Map<string, Promise<string>>());
@@ -103,6 +105,11 @@ export default function Command() {
 
   useEffect(() => {
     journalRef.current = prefetch(() => loadJournalContext(notion, journalSettings, idCache));
+    // Only a hint: a failed lookup is reported properly on submit.
+    journalRef.current.then(
+      ({ rootBlocks }) => setLastEndHint(latestEntryEnd(rootBlocks) ?? "今天還沒有紀錄"),
+      () => setLastEndHint("無法讀取"),
+    );
   }, []);
 
   function ticketSummary(key: string): Promise<string> {
@@ -230,6 +237,7 @@ export default function Command() {
       }
     >
       <Form.Description title="預覽" text={preview} />
+      <Form.Description title="上一筆結束" text={lastEndHint} />
       <Form.TextField
         id="timeStart"
         title="Time Start"
