@@ -1,0 +1,88 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "worklog-to-notion",
+  "title": "Worklog to Notion",
+  "description": "Quickly append a time-sorted worklog entry to today's Notion work journal page.",
+  "icon": "extension-icon.png",
+  "author": "v_allan",
+  "license": "MIT",
+  "categories": [
+    "Productivity"
+  ],
+  "commands": [
+    {
+      "name": "add-worklog",
+      "title": "Add Worklog",
+      "description": "Insert a worklog entry into today's Notion journal page, sorted by start time.",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "notionApiKey",
+      "title": "Notion API Key",
+      "description": "Internal integration secret. The integration must be connected to the worklog database.",
+      "type": "password",
+      "required": true
+    },
+    {
+      "name": "notionDatabaseId",
+      "title": "Notion Database ID",
+      "description": "ID of the worklog database (32 hex chars from the database URL).",
+      "type": "textfield",
+      "required": true
+    },
+    {
+      "name": "notionDateProperty",
+      "title": "Date Property Name",
+      "description": "Database date property used to find today's page.",
+      "type": "textfield",
+      "required": false,
+      "default": "Date"
+    },
+    {
+      "name": "jiraBaseUrl",
+      "title": "Jira Base URL",
+      "description": "Used to look up ticket summaries.",
+      "type": "textfield",
+      "required": false,
+      "default": "https://104corp.atlassian.net"
+    },
+    {
+      "name": "jiraEmail",
+      "title": "Jira Email",
+      "description": "Atlassian account email. Needed only when filling in a Jira ticket.",
+      "type": "textfield",
+      "required": false
+    },
+    {
+      "name": "jiraApiToken",
+      "title": "Jira API Token",
+      "description": "Atlassian API token. Needed only when filling in a Jira ticket.",
+      "type": "password",
+      "required": false
+    }
+  ],
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "lint": "ray lint",
+    "fix-lint": "ray lint --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@notionhq/client": "5.31.0",
+    "@raycast/api": "2.11.1",
+    "@raycast/utils": "2.3.3"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "2.2.0",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "eslint": "10.14.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "vitest": "5.1.0"
+  }
+}
