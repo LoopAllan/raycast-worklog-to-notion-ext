@@ -43,10 +43,10 @@
     {
       "name": "jiraBaseUrl",
       "title": "Jira Base URL",
-      "description": "Used to look up ticket summaries.",
+      "description": "Your Jira Cloud site, used to look up ticket summaries.",
       "type": "textfield",
-      "required": false,
-      "default": "https://104corp.atlassian.net"
+      "required": true,
+      "placeholder": "https://your-domain.atlassian.net"
     },
     {
       "name": "jiraEmail",
@@ -61,6 +61,51 @@
       "description": "Atlassian API token. Needed only when filling in a Jira ticket.",
       "type": "password",
       "required": false
+    },
+    {
+      "name": "autoSections",
+      "title": "Auto Sections",
+      "label": "自動添加 早上／午休／下午／加班 時段",
+      "description": "When on, adding a worklog also adds each missing section (heading + divider) once its start time has passed.",
+      "type": "checkbox",
+      "required": false,
+      "default": false
+    },
+    {
+      "name": "sectionMorningStart",
+      "title": "早上 Start",
+      "description": "Start time (mmii) of 早上. Used only when Auto Sections is on.",
+      "type": "textfield",
+      "required": false,
+      "default": "0900",
+      "placeholder": "0900"
+    },
+    {
+      "name": "sectionLunchStart",
+      "title": "午休 Start",
+      "description": "Start time (mmii) of 午休. Used only when Auto Sections is on.",
+      "type": "textfield",
+      "required": false,
+      "default": "1200",
+      "placeholder": "1200"
+    },
+    {
+      "name": "sectionAfternoonStart",
+      "title": "下午 Start",
+      "description": "Start time (mmii) of 下午. Used only when Auto Sections is on.",
+      "type": "textfield",
+      "required": false,
+      "default": "1300",
+      "placeholder": "1300"
+    },
+    {
+      "name": "sectionOvertimeStart",
+      "title": "加班 Start",
+      "description": "Start time (mmii) of 加班. Used only when Auto Sections is on.",
+      "type": "textfield",
+      "required": false,
+      "default": "1800",
+      "placeholder": "1800"
     }
   ],
   "scripts": {

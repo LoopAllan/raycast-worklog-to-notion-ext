@@ -14,17 +14,23 @@ import { ACTIONS, DEFAULT_ACTION } from "./lib/actions";
 import { buildEntryTree } from "./lib/entry";
 import { fetchTicketSummary, normalizeTicketKey } from "./lib/jira";
 import { loadJournalContext, type JournalContext } from "./lib/journal-context";
-import { createNotionClient, insertEntry, isStaleContextError } from "./lib/notion";
-import { findInsertPosition } from "./lib/position";
+import { createNotionClient, isStaleContextError } from "./lib/notion";
+import { parseSections, type Section } from "./lib/sections";
 import { currentTimeSlot, normalizeTime, parseHhmm, resolveEndTime, roundDuration } from "./lib/time";
+import { writeWorklog } from "./lib/write-worklog";
 
 interface ExtensionPreferences {
   notionApiKey: string;
   notionDatabaseId: string;
   notionDateProperty?: string;
-  jiraBaseUrl?: string;
+  jiraBaseUrl: string;
   jiraEmail?: string;
   jiraApiToken?: string;
+  autoSections?: boolean;
+  sectionMorningStart?: string;
+  sectionLunchStart?: string;
+  sectionAfternoonStart?: string;
+  sectionOvertimeStart?: string;
 }
 
 interface FormValues {
@@ -44,10 +50,23 @@ const journalSettings = {
   dateProperty: preferences.notionDateProperty?.trim() || "Date",
 };
 const jiraCredentials = {
-  baseUrl: preferences.jiraBaseUrl || "https://104corp.atlassian.net",
+  baseUrl: preferences.jiraBaseUrl.trim(),
   email: preferences.jiraEmail ?? "",
   apiToken: preferences.jiraApiToken ?? "",
 };
+
+/** Validated section times when Auto Sections is on; throws so a bad time surfaces on submit. */
+function configuredSections(): Section[] | null {
+  if (!preferences.autoSections) {
+    return null;
+  }
+  return parseSections({
+    早上: preferences.sectionMorningStart ?? "",
+    午休: preferences.sectionLunchStart ?? "",
+    下午: preferences.sectionAfternoonStart ?? "",
+    加班: preferences.sectionOvertimeStart ?? "",
+  });
+}
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -170,14 +189,14 @@ export default function Command() {
         description: values.description,
       });
 
-      const write = ({ pageId, rootBlocks }: JournalContext) =>
-        insertEntry(
-          notion,
-          pageId,
+      const now = new Date();
+      const write = (journalContext: JournalContext) =>
+        writeWorklog(notion, journalContext, {
           entry,
-          findInsertPosition(rootBlocks, parseHhmm(start)),
-          rootBlocks.map((block) => block.id),
-        );
+          startMinutes: parseHhmm(start),
+          sections: configuredSections(),
+          nowMinutes: now.getHours() * 60 + now.getMinutes(),
+        });
 
       try {
         await write(context);
