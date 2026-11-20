@@ -101,7 +101,7 @@ function plainText(block: BlockObjectResponse): string {
 
 export async function listRootBlocks(client: Pick<Client, "blocks">, pageId: string): Promise<RootBlockSummary[]> {
   const blocks = await collectPaginatedAPI(client.blocks.children.list, { block_id: pageId });
-  return blocks.filter(isFullBlock).map((block) => ({ id: block.id, text: plainText(block) }));
+  return blocks.filter(isFullBlock).map((block) => ({ id: block.id, text: plainText(block), type: block.type }));
 }
 
 function toRichText(text: string) {
@@ -117,7 +117,13 @@ function nodeHeight(node: EntryNode): number {
 }
 
 function toBlockRequest(node: EntryNode, includeChildren: boolean): BlockObjectRequest {
+  if (node.type === "divider") {
+    return { type: "divider", divider: {} };
+  }
   const rich_text = toRichText(node.text);
+  if (node.type === "heading_2") {
+    return { type: "heading_2", heading_2: { rich_text } };
+  }
   const children =
     includeChildren && node.children.length > 0 ? node.children.map((child) => toBlockRequest(child, true)) : undefined;
   const content = children ? { rich_text, children } : { rich_text };
@@ -194,4 +200,24 @@ export async function insertEntry(
     throw error;
   }
   return rootId;
+}
+
+/** Adds a section as two root blocks, "## <name>" and a divider; returns their IDs. */
+export async function insertSection(
+  client: EntryWriterClient,
+  pageId: string,
+  name: string,
+  position: InsertPosition,
+  existingRootIds: string[],
+): Promise<[headingId: string, dividerId: string]> {
+  const [headingId, dividerId] = await appendTree(
+    client,
+    pageId,
+    [
+      { type: "heading_2", text: name, children: [] },
+      { type: "divider", text: "", children: [] },
+    ],
+    { position, existingIds: new Set(existingRootIds) },
+  );
+  return [headingId, dividerId];
 }

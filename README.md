@@ -11,13 +11,15 @@ npm run dev   # Raycast 會自動載入這個 extension
 
 第一次執行時，Raycast 會要求填寫 Preferences：
 
-| 欄位                   | 必填 | 說明                                                                                         |
-| ---------------------- | ---- | -------------------------------------------------------------------------------------------- |
-| Notion API Key         | ✅   | Internal integration secret，該 integration 必須被加到工作日誌 database（`⋯` → Connections） |
-| Notion Database ID     | ✅   | 工作日誌資料庫的 ID；database URL 裡的 32 碼，或「Copy data source ID」都可以                |
-| Date Property Name     |      | 用來找今天頁面的日期欄位，預設 `Date`                                                        |
-| Jira Base URL          |      | 預設 `https://104corp.atlassian.net`                                                         |
-| Jira Email / API Token |      | 有填 Jira ticket 時才需要，用來抓 summary                                                    |
+| 欄位                         | 必填 | 說明                                                                                               |
+| ---------------------------- | ---- | -------------------------------------------------------------------------------------------------- |
+| Notion API Key               | ✅   | Internal integration secret，該 integration 必須被加到工作日誌 database（`⋯` → Connections）       |
+| Notion Database ID           | ✅   | 工作日誌資料庫的 ID；database URL 裡的 32 碼，或「Copy data source ID」都可以                      |
+| Date Property Name           |      | 用來找今天頁面的日期欄位，預設 `Date`                                                              |
+| Jira Base URL                | ✅   | Jira Cloud 網址，例如 `https://your-domain.atlassian.net`                                          |
+| Jira Email / API Token       |      | 有填 Jira ticket 時才需要，用來抓 summary                                                          |
+| Auto Sections                |      | 打開後自動添加「早安／午休／下午／加班」時段，見下方〈自動時段〉                                   |
+| 早安／午休／下午／加班 Start |      | 各時段開始時間（`mmii`），預設 0900／1200／1300／1800，必須依序遞增；只在 Auto Sections 打開時使用 |
 
 ### 全域快捷鍵
 
@@ -44,7 +46,9 @@ Raycast 不允許 extension 自帶預設的全域快捷鍵，需要手動設定�
 ## 寫入規則
 
 1. 在 database 找 Date 落在今天（本地時區）的第一個頁面。
-2. 根層 block 中，文字以 `mmii - mmii` 開頭的視為紀錄；新紀錄插在**第一個開始時間比它晚的紀錄前面**，沒有就 append 到頁面最後。
+2. 根層 block 中，文字以 `mmii - mmii` 開頭的視為紀錄。
+   - **Auto Sections 關閉**：新紀錄插在第一個開始時間比它晚的紀錄前面，沒有就 append 到頁面最後。
+   - **Auto Sections 打開**：新紀錄插在「開始時間 ≤ 它」的最後一筆紀錄或時段分隔線後面，所以晚一點才補記的上午紀錄仍會落在上午。
 3. 產生的結構：
 
 ```
@@ -58,6 +62,21 @@ Raycast 不允許 extension 自帶預設的全域快捷鍵，需要手動設定�
 1010 - 1015 開會                  # 沒有 ticket、有 description
     VIP ATS 開會
 ```
+
+## 自動時段
+
+Auto Sections 打開時，每次 Add Worklog 會先依序檢查「早安 → 午休 → 下午 → 加班」，符合以下兩個條件的時段會被添加為兩個 block（`## 時段名稱` heading 加上 divider）：
+
+1. 頁面上還沒有同名的 heading
+2. 目前時間已經到了該時段的開始時間
+
+插入位置：
+
+- 放在開始時間早於該時段的最後一筆紀錄之後；
+- 沒有這種紀錄時，放在前一個時段的分隔線之後；
+- 前面也沒有時段時，放在頁面第一個 block 之後。
+
+時段會比這次的紀錄先寫入，所以紀錄會落在對的時段底下。
 
 ## 開發
 
