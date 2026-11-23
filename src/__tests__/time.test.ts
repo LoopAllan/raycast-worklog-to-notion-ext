@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatHhmm, normalizeTime, parseHhmm, resolveEndTime, roundDuration, roundToFiveMinutes } from "../lib/time";
+import { formatHhmm, normalizeTime, parseHhmm, resolveEndTime, roundToFiveMinutes } from "../lib/time";
 
 describe("parseHhmm", () => {
   it.each([
@@ -45,44 +45,20 @@ describe("formatHhmm", () => {
   });
 });
 
-describe("roundDuration", () => {
-  it.each([
-    ["10", 10],
-    ["14", 10],
-    ["15", 20],
-    ["24", 20],
-    ["25", 30],
-    ["34", 30],
-    ["3", 10],
-    ["0", 10],
-    ["", 10],
-  ])("rounds %s to %i", (input, expected) => {
-    expect(roundDuration(input)).toBe(expected);
-  });
-
-  it.each(["abc", "-5", "1.5"])("rejects %s", (input) => {
-    expect(() => roundDuration(input)).toThrow();
-  });
-});
-
 describe("resolveEndTime", () => {
-  it("uses start plus rounded duration when end is empty", () => {
-    expect(resolveEndTime({ start: "1010", end: "", duration: "14" })).toBe("1020");
+  it("rounds the end time", () => {
+    expect(resolveEndTime({ start: "1010", end: "1112" })).toBe("1110");
   });
 
-  it("prefers end over duration", () => {
-    expect(resolveEndTime({ start: "1010", end: "1112", duration: "10" })).toBe("1110");
+  it.each(["", "   "])("requires an end time (%j)", (end) => {
+    expect(() => resolveEndTime({ start: "1010", end })).toThrow(/結束時間/);
   });
 
   it("rejects end that is not after start", () => {
-    expect(() => resolveEndTime({ start: "1010", end: "1010", duration: "10" })).toThrow(/大於/);
+    expect(() => resolveEndTime({ start: "1010", end: "1010" })).toThrow(/大於/);
   });
 
   it("rejects end that rounds to the same as start", () => {
-    expect(() => resolveEndTime({ start: "1010", end: "1012", duration: "10" })).toThrow(/大於/);
-  });
-
-  it("rejects duration that runs past midnight", () => {
-    expect(() => resolveEndTime({ start: "2350", end: "", duration: "20" })).toThrow();
+    expect(() => resolveEndTime({ start: "1010", end: "1012" })).toThrow(/大於/);
   });
 });

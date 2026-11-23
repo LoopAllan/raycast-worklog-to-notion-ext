@@ -1,7 +1,6 @@
 const MINUTES_PER_DAY = 24 * 60;
 const LAST_SLOT = MINUTES_PER_DAY - 5;
 const TIME_PATTERN = /^(\d{1,2}):?(\d{2})$/;
-const DURATION_STEP = 10;
 
 /** Parses "mmii" / "mii" / "mm:ii" into minutes since midnight. */
 export function parseHhmm(input: string): number {
@@ -36,39 +35,20 @@ export function currentTimeSlot(now: Date = new Date()): string {
   return formatHhmm(roundToFiveMinutes(now.getHours() * 60 + now.getMinutes()));
 }
 
-/** Rounds to the nearest 10 minutes (half up), never below 10. Empty input means the minimum. */
-export function roundDuration(input: string): number {
-  const trimmed = input.trim();
-  if (trimmed === "") {
-    return DURATION_STEP;
-  }
-  if (!/^\d+$/.test(trimmed)) {
-    throw new Error(`耗時必須是正整數分鐘：「${input}」`);
-  }
-  return Math.max(Math.round(Number(trimmed) / DURATION_STEP) * DURATION_STEP, DURATION_STEP);
-}
-
 export interface TimeRangeInput {
   start: string;
   end: string;
-  duration: string;
 }
 
-/** End time wins over duration when present; both are rounded before comparing. */
-export function resolveEndTime({ start, end, duration }: TimeRangeInput): string {
-  const startMinutes = roundToFiveMinutes(parseHhmm(start));
-
-  if (end.trim() !== "") {
-    const endMinutes = roundToFiveMinutes(parseHhmm(end));
-    if (endMinutes <= startMinutes) {
-      throw new Error(`結束時間（${formatHhmm(endMinutes)}）必須大於開始時間（${formatHhmm(startMinutes)}）`);
-    }
-    return formatHhmm(endMinutes);
+/** Both times are rounded before comparing; the end is required. */
+export function resolveEndTime({ start, end }: TimeRangeInput): string {
+  if (end.trim() === "") {
+    throw new Error("請填結束時間");
   }
-
-  const endMinutes = startMinutes + roundDuration(duration);
-  if (endMinutes >= MINUTES_PER_DAY) {
-    throw new Error("結束時間超過當天 2400，請改填結束時間");
+  const startMinutes = roundToFiveMinutes(parseHhmm(start));
+  const endMinutes = roundToFiveMinutes(parseHhmm(end));
+  if (endMinutes <= startMinutes) {
+    throw new Error(`結束時間（${formatHhmm(endMinutes)}）必須大於開始時間（${formatHhmm(startMinutes)}）`);
   }
   return formatHhmm(endMinutes);
 }

@@ -10,14 +10,14 @@ import {
   Toast,
 } from "@raycast/api";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ACTIONS, DEFAULT_ACTION } from "./lib/actions";
+import { loadActionUsage, rankActions, recordActionUsage } from "./lib/action-usage";
 import { buildEntryTree } from "./lib/entry";
 import { fetchTicketSummary, normalizeTicketKey } from "./lib/jira";
 import { loadJournalContext, type JournalContext } from "./lib/journal-context";
 import { createNotionClient, isStaleContextError } from "./lib/notion";
 import { latestEntryEnd } from "./lib/position";
 import { parseSections, type Section } from "./lib/sections";
-import { currentTimeSlot, normalizeTime, parseHhmm, resolveEndTime, roundDuration } from "./lib/time";
+import { currentTimeSlot, normalizeTime, parseHhmm, resolveEndTime } from "./lib/time";
 import { writeWorklog } from "./lib/write-worklog";
 
 interface ExtensionPreferences {
@@ -37,7 +37,6 @@ interface ExtensionPreferences {
 interface FormValues {
   timeStart: string;
   timeEnd: string;
-  duration: string;
   action: string;
   ticket: string;
   description: string;
@@ -46,6 +45,7 @@ interface FormValues {
 const preferences = getPreferenceValues<ExtensionPreferences>();
 const notion = createNotionClient(preferences.notionApiKey);
 const idCache = new Cache({ namespace: "notion-ids" });
+const actionCache = new Cache({ namespace: "action-usage" });
 const journalSettings = {
   databaseId: preferences.notionDatabaseId.trim(),
   dateProperty: preferences.notionDateProperty?.trim() || "Date",
@@ -92,8 +92,10 @@ function tryNormalize(value: string): { value?: string; error?: string } {
 export default function Command() {
   const [timeStart, setTimeStart] = useState(currentTimeSlot());
   const [timeEnd, setTimeEnd] = useState("");
-  const [duration, setDuration] = useState("10");
-  const [action, setAction] = useState<string>(DEFAULT_ACTION);
+  // Read once per form: the most used actions come first and the last one is preselected.
+  const [actionUsage] = useState(() => loadActionUsage(actionCache));
+  const rankedActions = useMemo(() => rankActions(actionUsage.counts), [actionUsage]);
+  const [action, setAction] = useState(actionUsage.last);
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ticketLine, setTicketLine] = useState<string>();
@@ -146,12 +148,12 @@ export default function Command() {
 
   const preview = useMemo(() => {
     try {
-      const root = `${normalizeTime(timeStart)} - ${resolveEndTime({ start: timeStart, end: timeEnd, duration })} ${action}`;
+      const root = `${normalizeTime(timeStart)} - ${resolveEndTime({ start: timeStart, end: timeEnd })} ${action}`;
       return ticketLine ? `${root}\n    ${ticketLine}` : root;
     } catch (error) {
       return `⚠️ ${errorMessage(error)}`;
     }
-  }, [timeStart, timeEnd, duration, action, ticketLine]);
+  }, [timeStart, timeEnd, action, ticketLine]);
 
   function normalizeTimeField(field: "timeStart" | "timeEnd", value: string, setter: (value: string) => void) {
     if (field === "timeEnd" && value.trim() === "") {
@@ -165,15 +167,6 @@ export default function Command() {
     setErrors((prev) => ({ ...prev, [field]: result.error }));
   }
 
-  function normalizeDurationField(value: string) {
-    try {
-      setDuration(String(roundDuration(value)));
-      setErrors((prev) => ({ ...prev, duration: undefined }));
-    } catch (error) {
-      setErrors((prev) => ({ ...prev, duration: errorMessage(error) }));
-    }
-  }
-
   async function handleSubmit(values: FormValues) {
     if (isSubmitting) {
       return;
@@ -183,7 +176,7 @@ export default function Command() {
 
     try {
       const start = normalizeTime(values.timeStart);
-      const end = resolveEndTime({ start, end: values.timeEnd, duration: values.duration });
+      const end = resolveEndTime({ start, end: values.timeEnd });
       const ticketKey = normalizeTicketKey(values.ticket);
 
       const journal = journalRef.current ?? loadJournalContext(notion, journalSettings, idCache);
@@ -216,6 +209,7 @@ export default function Command() {
         await write(await loadJournalContext(notion, journalSettings, idCache));
       }
 
+      recordActionUsage(actionCache, values.action);
       await showHUD(`✅ 已寫入 ${entry.text}`);
       await popToRoot({ clearSearchBar: true });
     } catch (error) {
@@ -236,8 +230,7 @@ export default function Command() {
         </ActionPanel>
       }
     >
-      <Form.Description title="預覽" text={preview} />
-      <Form.Description title="上一筆結束" text={lastEndHint} />
+      <Form.Description title="預覽" text={`${preview}\n\n上一筆結束：${lastEndHint}`} />
       <Form.TextField
         id="timeStart"
         title="Time Start"
@@ -251,24 +244,15 @@ export default function Command() {
       <Form.TextField
         id="timeEnd"
         title="Time End"
-        placeholder="選填；有值時優先於 Duration"
+        placeholder="mmii，例如 1140"
+        info="以 5 分鐘為單位四捨五入，必須大於 Time Start"
         value={timeEnd}
         error={errors.timeEnd}
         onChange={setTimeEnd}
         onBlur={(event) => normalizeTimeField("timeEnd", event.target.value ?? "", setTimeEnd)}
       />
-      <Form.TextField
-        id="duration"
-        title="Duration（分）"
-        placeholder="10"
-        info="以 10 分鐘為單位四捨五入，最少 10 分鐘"
-        value={duration}
-        error={errors.duration}
-        onChange={setDuration}
-        onBlur={(event) => normalizeDurationField(event.target.value ?? "")}
-      />
       <Form.Dropdown id="action" title="Action" value={action} onChange={setAction}>
-        {ACTIONS.map((item) => (
+        {rankedActions.map((item) => (
           <Form.Dropdown.Item key={item} value={item} title={item} />
         ))}
       </Form.Dropdown>
@@ -282,7 +266,14 @@ export default function Command() {
       <Form.TextArea
         id="description"
         title="Description"
-        placeholder={"每一行是一個 block\n縮排會掛到上一行底下，「- 」開頭會變成項目符號"}
+        placeholder={[
+          "每一行是一個 block，空行會略過",
+          "- 「- 」或「* 」開頭會變成項目符號",
+          "    縮排（空白或 Tab）的行會掛到上一行底下",
+          "    - 縮排的項目符號也可以",
+          "        可以一直往下縮",
+          "回到最左邊就是新的一行",
+        ].join("\n")}
       />
     </Form>
   );
